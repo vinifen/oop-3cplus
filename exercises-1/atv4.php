@@ -1,93 +1,71 @@
 <?php
-class Market {
-    private array $products;
 
-    public function __construct(Products ...$products) 
+class Book {
+    private bool $availability = true;
+    private Person $person_rented;
+
+    public function __construct(    
+        private string $name,
+        private string $author,
+        private int $pagesNumber,
+    ) {}
+    
+    public function rent(Person $person)
     {
-        $this->products = $products;
+        if (!$this->availability) {
+            return false;
+        }
+        $this->person_rented = $person;
+        $this->availability = false;
+        return true;
+    } 
+
+    public function replace(){
+        unset($this->person_rented);
+        $this->availability = true;
     }
 
-    public function order(array $productsName, string $paymentMethod)
-    {
-        $result = [
-            "info" => [
-                "payment_method" => $paymentMethod, 
-                "total_price" => 0
+    public function inform(){
+        return [
+            "person" => [
+                "name" => $this->person_rented->getName(),
+                "address" => $this->person_rented->getAddress(),
+                "email" => $this->person_rented->getEmail(),
+                "phone" => $this->person_rented->getPhone(),
             ], 
-            "products" => [] 
+            "name" => $this->name, 
+            "availability" => $this->availability
         ];
-
-        foreach ($productsName as $productName) {
-            foreach ($this->products as $product) {
-                if($product->getName() == $productName){
-                    if($product->verifyStock()){
-                        $result["info"]["total_price"] += $product->getPrice(); 
-                        array_push(
-                            $result["products"], [
-                                "name" => $product->getName(), 
-                                "price" => $product->getPrice()
-                            ]
-                        );
-                        $product->remove(1);
-                        
-                    }else{
-                        array_push(
-                            $result["products"], [
-                                "name" => $product->getName(), 
-                                "massage" => "Product out of stock"
-                            ]
-                        );
-                    }
-
-                }
-            }
-        }
-        return $result;
-    }
-
-    public function addProducts(Products ...$newProducts)
-    {
-        foreach ($newProducts as $newProduct) {
-            array_push($this->products, $newProduct);
-        }
     }
 }
 
-class Products {
-    public function __construct(private string $name, private float $price, private int $stock) {
-        
-    }
+class Person {
+    public function __construct(
+        private string $name,
+        private string $address,
+        private string $email,
+        private string $phone,
+    ) {}
 
-    public function remove(int $n){
-        if($this->stock - $n < 0){
-            return ["message" => "Amount invalid: Stock will be minor than 0"];
-        }
-        $this->stock -= $n;
-    }
-
-    public function add(int $n){
-        $this->stock += $n;
-    }
-    public function verifyStock(){
-        if($this->stock == 0){
-            return false;
-        }
-        return true;
-    }
-
-    public function getName(){
+    public function getName(): string {
         return $this->name;
     }
 
-    public function getPrice(){
-        return $this->price;
+    public function getAddress(): string {
+        return $this->address;
     }
 
+    public function getEmail(): string {
+        return $this->email;
+    }
+
+    public function getPhone(): string {
+        return $this->phone;
+    }
 }
 
 
-
-$bacon = new Products("bacon", 12.00, 120);
-$milk = new Products("milk", 15.90, 50);
-$market1 = new Market(...[$bacon, $milk]);
-echo var_dump($market1->order(["milk", "bacon"], "card")); 
+$george = new Person("George", "adf street, 1233", "email@email.com", "12312312");
+$book1984 = new Book ("1984", "George Orwel", 130);
+$book1984->rent($george);
+var_dump($book1984->inform());
